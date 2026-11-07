@@ -1,0 +1,3 @@
+PRODUCT_NAME = MusicPod
+PRODUCT_BUNDLE_IDENTIFIER = com.musicpod.musicpod
+PRODUCT_COPYRIGHT = Copyright © 2026 MusicPod. All rights reserved.

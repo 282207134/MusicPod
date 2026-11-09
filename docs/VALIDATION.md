@@ -1,5 +1,72 @@
 # 验证记录
 
+## 2026-11-09：免费在线服务接入
+
+环境：Windows、Flutter 3.47.7、Dart 3.13.5。项目默认启动在线模式，本地演示仍可用 `MUSICPOD_DEMO=true` 启动。
+
+已验证：
+
+- `flutter analyze` 无问题。
+- Flutter 测试共 22 项，最终逐文件运行全部通过：`controller_test.dart`（5）、`services_test.dart`（9）、`live_widget_test.dart`（2）、`widget_test.dart`（6），覆盖原本地演示、新在线页面在 320/428 屏宽的布局、音乐响应解析、RSS 命名空间与音频筛选、搜索竞态、离线修改重试、同步期间的新修改和退出账号后的数据隔离。整套运行曾通过；Windows 下重复整套运行时也出现过测试进程 `did not complete` 中止，随后逐文件复核通过，没有把中止当成断言通过。
+- `node --test test/rss_proxy_test.mjs`：通过，检查 RSS 代理的允许域名、HTTPS、重定向目标、响应大小、方法和跨域响应。
+- `flutter test tool/service_smoke_test.dart`：实际请求 NPR 公开 RSS 并成功解析出可播放的 HTTPS 音频单集；Jamendo 检查因未配置自己的 Client ID 而跳过。
+- `flutter build web --release`：成功，产物在本机配置的 `build_temp/web`。构建出现依赖涉及 CupertinoIcons 字体的提示，未阻止构建；本 App 页面使用 Material 图标。
+- `flutter build apk --debug --target-platform android-arm64`：成功，产物为 `build/app/outputs/flutter-apk/app-debug.apk`。此包未填入用户服务配置，没有安装到 Android 设备验证真实授权与音频。现有 Android 构建工具版本出现后续升级提示，当前构建通过。
+- 已生成并目视检查 5 张配置示意图，检查图文指南的本地图片及引用文件路径。图片没有真实后台、账号信息或密钥。
+
+服务端数据库 SQL 和网页版 RSS Edge Function 的部署材料已经准备，但尚未在用户项目执行。没有用户的 Supabase、GitHub OAuth 与 Jamendo 应用配置，因此**真实 GitHub 登录回跳、真实音乐播放、数据库 RLS 的远端执行及跨设备同步仍待配置后联调**。以上服务解析和同步逻辑使用可控响应测试，不能代替远端账号验收。
+
+Android、iOS、macOS 配置中加入了网络或登录回调支持；本次设备实测范围不沿用下面旧版记录。`dist/musicpod-android-arm64.apk` 仍是原本地演示安装包，不代表新版在线功能。
+
+操作与验收入口：[免费服务图文配置指南](SERVICE_SETUP.md)。
+
+### 用户填写配置后的连通检查
+
+- 已确认 `config/local.json` 的三项配置存在，Supabase 使用 Publishable key；没有输出配置值。
+- 带本地配置运行 `flutter test tool/service_smoke_test.dart --dart-define-from-file=config/local.json`，NPR RSS 与用户自己的 Jamendo 音乐检索均通过（2 项）。这验证了目录读取，不代表已在设备上试听音频。
+- Supabase Auth 设置接口可达，但 GitHub 登录提供商当前未启用，真实登录和云端资料库验收仍待完成。
+- 当前没有连接 Android 设备，也没有可用模拟器。可先用 Chrome 运行；网页播客需要先部署 RSS 转发函数。
+
+### 用户授权后的 RSS 转发服务部署
+
+- 已在用户打开的 Supabase 控制台创建并部署 `rss-proxy`，部署请求成功。
+- 关闭该函数的 `Verify JWT with legacy secret` 并保存；刷新后台后确认设置仍为关闭。数据库 RLS 未作更改。
+- 从本机实际请求验证：跨域预检 OPTIONS 和内容 GET 均返回 HTTP 200，允许网页跨域读取。
+- 在浏览器中以不带用户登录令牌的请求验证通过：返回有效 RSS XML，包含 355 个单集。App 按现有规则最多展示前 100 个单集。
+- 本次验证了已部署服务的读取与跨域访问；用户 App 中的实际音频试听仍需在节目页点击播放确认，无需重新构建 App。
+
+### 中文与日语节目扩充
+
+- 新增中文节目“硅谷101”“少数派播客”，以及日语节目“Rebuild”（以日语为主，个别单集为英语）、“4989 American Life”；保留 NPR。节目列表按语言分组，内置订阅展示节目名。
+- 已通过发布方官方站点确认公开 RSS，并验证新增四个节目的首个 HTTPS 音频可请求（HTTP 206）。没有下载完整音频，也没有代替用户实际试听。
+- 已更新并部署 `rss-proxy` 的允许域名，浏览器跨域读取四个新源均返回 HTTP 200 和有效 XML；仍保留域名限制及关闭 JWT 验证的公开读取配置。
+- `flutter analyze` 通过；在线页面 320/428 屏宽检查通过；RSS 转发允许新域名及拒绝非允许域名的测试通过。
+- 带本地配置运行真实网络检查，NPR、四个新增节目、Jamendo 检索共 6 项通过；新增节目均能通过 App 使用的 RSS 解析器读取。
+- 本次增加了 App 页面代码，正在运行开发版时需要热重启（终端大写 `R`）才能看到新列表；服务端无需用户再次部署或填写 Key。
+
+### 中文、日语和英语界面
+
+- 增加 271 条界面文案的中日文资源，并接入 Flutter 官方 Material / Cupertino 语言支持。默认跟随设备，可选择 English、简体中文、日本語；未知设备语言回退为英语。
+- 界面语言和音乐内容语言偏好分开保存在设备，不写入账号资料库；账号切换和云端同步不会覆盖界面语言。节目、艺人和用户输入的名称保留原文。
+- `flutter test --enable-vmservice --concurrency=1 --no-pub`：整套 33 项通过。新增检查包括实际点击切换、设备语言变化、持久保存、对话框切换时保留输入，以及 26 个页面 × 中日两种语言 × 320/428 两种屏宽 × 在线/演示两种模式，共 208 次布局检查。
+- `flutter analyze --no-pub` 无问题。已检查翻译参数一致性和直接引用的界面文案覆盖。
+- 已构建并运行实际网页发布版，在独立的本地预览中确认默认中文、切换日语、刷新后保留日语、再切换英语；中文字体实际可显示。预览已关闭，没有改动用户原来运行的页面或服务配置。
+- 当前 Windows / Dart 3.13.5 的测试进程崩溃与[已报告的采样分析器问题](https://github.com/dart-lang/sdk/issues/64627)一致。测试启动配置在该版本且启用本地 VM 服务时关闭测试采样分析器，随后整套通过；没有修改 SDK 文件或 App 运行权限。浏览器版的测试运行器未完成，未计为通过；实际网页使用发布构建单独验证。
+- 本次增加 SDK 依赖与资源，用户更新时需停止旧 App 后完整启动一次；以后界面内切换无需重启。Android/iOS/macOS 的本次多语言设备运行尚未实测。
+
+### 代码精简后的复核
+
+- 在线版与演示版共用专辑筛选、排序和队列切换逻辑，只覆盖各自的数据来源；保留空队列的原有行为。移除在线控制器未使用的配置参数，并避免重复读取 RSS GUID。
+- 创建歌单、编辑账号和添加 RSS 复用输入弹窗。输入框自行管理生命周期，移除手动释放控制器所需的延迟；保留长度、邮箱校验和多语言支持。
+- 本次生产代码净减少 51 行。`flutter analyze --no-pub` 无问题；`flutter test --enable-vmservice --concurrency=1 --no-pub` 共 **35 项通过**；RSS 代理测试 **1 项通过**。
+- 新增回归检查覆盖在线曲目来源隔离、隐藏曲目、队列循环与空队列，以及弹窗的空值、邮箱校验、去除首尾空格、取消和键盘提交。
+
+入口与维护方式：[界面语言说明](LOCALIZATION.md)。
+
+---
+
+## 2026-11-03：原本地演示验证记录
+
 验证日期：2026-11-03（Asia/Tokyo）。
 
 ## 环境

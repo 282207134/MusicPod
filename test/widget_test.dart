@@ -58,6 +58,49 @@ void main() {
     c.dispose();
   });
 
+  testWidgets('Playlist and account dialogs validate, trim and cancel input', (
+    tester,
+  ) async {
+    final c = AppController(persist: false, audioEnabled: false)..selectTab(2);
+    await tester.pumpWidget(MusicPodApp(controller: c, autoAdvance: false));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create playlist'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(c.customPlaylists, isEmpty);
+    await tester.enterText(find.byType(TextField), '  Evening  ');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    expect(c.customPlaylists.single.title, 'Evening');
+    await tester.tap(find.text('Create playlist'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Discard this');
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(c.customPlaylists, hasLength(1));
+
+    c.go(AppScreen.account);
+    await tester.pumpAndSettle();
+    final originalEmail = c.email;
+    await tester.tap(find.text('Email'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'invalid email');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(c.email, originalEmail);
+    await tester.enterText(find.byType(TextField), '  listener@example.com  ');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(c.email, 'listener@example.com');
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    c.dispose();
+  });
+
   testWidgets('Skip stays tappable above the signup scroll area', (
     tester,
   ) async {

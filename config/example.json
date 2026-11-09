@@ -1,0 +1,7 @@
+{
+  "MUSICPOD_DEMO": "false",
+  "SUPABASE_URL": "",
+  "SUPABASE_PUBLISHABLE_KEY": "",
+  "JAMENDO_CLIENT_ID": "",
+  "AUTH_REDIRECT_URL": "com.musicpod.musicpod://login-callback/"
+}

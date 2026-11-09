@@ -28,20 +28,50 @@ enum AppScreen {
 }
 
 class Track {
-  const Track(this.id, this.title, this.artist, this.art);
+  const Track(
+    this.id,
+    this.title,
+    this.artist,
+    this.art, {
+    this.audioUrl,
+    this.imageUrl,
+    this.sourceUrl,
+    this.licenseUrl,
+    this.durationSeconds = 0,
+    this.isPodcast = false,
+    this.description = '',
+  });
   final String id, title, artist;
   final int art;
+  final String? audioUrl, imageUrl, sourceUrl, licenseUrl;
+  final int durationSeconds;
+  final bool isPodcast;
+  final String description;
   Map<String, Object> toJson() => {
     'id': id,
     'title': title,
     'artist': artist,
     'art': art,
+    'audioUrl': ?audioUrl,
+    'imageUrl': ?imageUrl,
+    'sourceUrl': ?sourceUrl,
+    'licenseUrl': ?licenseUrl,
+    'durationSeconds': durationSeconds,
+    'isPodcast': isPodcast,
+    'description': description,
   };
   factory Track.fromJson(Map<String, dynamic> json) => Track(
     json['id'] as String,
     json['title'] as String,
     json['artist'] as String,
     json['art'] as int,
+    audioUrl: json['audioUrl'] as String?,
+    imageUrl: json['imageUrl'] as String?,
+    sourceUrl: json['sourceUrl'] as String?,
+    licenseUrl: json['licenseUrl'] as String?,
+    durationSeconds: json['durationSeconds'] as int? ?? 0,
+    isPodcast: json['isPodcast'] == true,
+    description: json['description'] as String? ?? '',
   );
 }
 

@@ -1,0 +1,4 @@
+project_id = "musicpod"
+
+[functions.rss-proxy]
+verify_jwt = false

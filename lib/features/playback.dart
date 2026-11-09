@@ -1,4 +1,6 @@
+import '../l10n/app_strings.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/catalog.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
@@ -49,6 +51,11 @@ class AlbumPage extends StatelessWidget {
                     child: LayoutBuilder(
                       builder: (_, b) => Artwork(
                         c.selectedPlaylist?.art ?? 65,
+                        url:
+                            c.selectedPlaylist?.imageUrl ??
+                            (c.isOnline
+                                ? c.visibleAlbum.firstOrNull?.imageUrl
+                                : null),
                         size: (b.maxWidth - 56).clamp(180, 280),
                         radius: 25,
                       ),
@@ -74,20 +81,30 @@ class AlbumPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      c.selectedPlaylist?.title ?? 'Insomnia (Album)',
+                      c.selectedPlaylist?.title ??
+                          (c.isOnline
+                              ? context.tr('Discover music')
+                              : 'Insomnia (Album)'),
                       style: TextStyle(fontSize: 23),
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      c.selectedPlaylist?.artist ?? 'Jay Sean, Selena, Bruno',
+                      c.selectedPlaylist?.artist ??
+                          (c.isOnline
+                              ? context.tr('Powered by Jamendo')
+                              : 'Jay Sean, Selena, Bruno'),
                       style: TextStyle(fontSize: 13, color: muted),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Flexible(
+                        Flexible(
                           child: Text(
-                            '1,39,005 likes',
+                            c.isOnline
+                                ? context.tr('{count} tracks', {
+                                    'count': c.visibleAlbum.length,
+                                  })
+                                : context.tr('1,39,005 likes'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 13, color: muted),
@@ -152,7 +169,10 @@ class SortPanel extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Sort by', style: TextStyle(color: muted, fontSize: 16)),
+          Text(
+            context.tr('Sort by'),
+            style: TextStyle(color: muted, fontSize: 16),
+          ),
           const SizedBox(height: 26),
           ...['Custom order', 'Title', 'Artist', 'Album', 'Recently added'].map(
             (s) => InkWell(
@@ -163,7 +183,7 @@ class SortPanel extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        s,
+                        context.tr(s),
                         style: TextStyle(
                           fontSize: 17,
                           color: c.sort == s ? orange : Colors.white,
@@ -180,8 +200,8 @@ class SortPanel extends StatelessWidget {
           const SizedBox(height: 15),
           TextButton(
             onPressed: c.back,
-            child: const Text(
-              'Cancel',
+            child: Text(
+              context.tr('Cancel'),
               style: TextStyle(color: muted, fontSize: 17),
             ),
           ),
@@ -220,13 +240,18 @@ class PlayerPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    const Text(
-                      'Insomnia (Album)',
+                    Text(
+                      c.isOnline
+                          ? context.tr(
+                              c.current.isPodcast ? 'Podcast' : 'Jamendo Music',
+                            )
+                          : 'Insomnia (Album)',
                       style: TextStyle(fontSize: 15),
                     ),
                     const SizedBox(height: 30),
                     Artwork(
                       c.current.art,
+                      url: c.current.imageUrl,
                       size: (b.maxWidth - 60).clamp(180, b.maxHeight * .39),
                       radius: 28,
                     ),
@@ -242,7 +267,9 @@ class PlayerPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                c.current.title,
+                                c.current.id == 'none'
+                                    ? context.tr('Choose something to play')
+                                    : c.current.title,
                                 maxLines: 2,
                                 style: const TextStyle(fontSize: 23),
                               ),
@@ -303,7 +330,7 @@ class PlayerPage extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 10),
                         child: Text(
-                          c.audioError!,
+                          context.tr(c.audioError!),
                           style: const TextStyle(color: orange, fontSize: 12),
                         ),
                       ),
@@ -327,28 +354,54 @@ class PlayerPage extends StatelessWidget {
                         context: context,
                         showDragHandle: true,
                         backgroundColor: const Color(0xff2c2522),
-                        builder: (_) => const Padding(
+                        builder: (_) => Padding(
                           padding: EdgeInsets.all(32),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'A moment to listen',
+                                context.tr(
+                                  c.isOnline
+                                      ? 'About this audio'
+                                      : 'A moment to listen',
+                                ),
                                 style: TextStyle(fontSize: 25),
                               ),
-                              SizedBox(height: 20),
+                              const SizedBox(height: 20),
                               Text(
-                                'Original instrumental preview\n\nNo lyrics are available for this track.',
+                                c.isOnline
+                                    ? '${c.current.title}\n${c.current.artist}\n\n${context.tr(c.current.isPodcast ? 'Audio provided by the podcast publisher.' : 'Music provided by Jamendo. See the original source for license and attribution details.')}'
+                                    : context.tr(
+                                        'Original instrumental preview\n\nNo lyrics are available for this track.',
+                                      ),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: muted, height: 1.8),
                               ),
-                              SizedBox(height: 24),
+                              if (c.current.sourceUrl != null)
+                                TextButton(
+                                  onPressed: () => launchUrl(
+                                    Uri.parse(c.current.sourceUrl!),
+                                    mode: LaunchMode.externalApplication,
+                                  ),
+                                  child: Text(
+                                    context.tr('Open original source'),
+                                  ),
+                                ),
+                              if (c.current.licenseUrl != null)
+                                TextButton(
+                                  onPressed: () => launchUrl(
+                                    Uri.parse(c.current.licenseUrl!),
+                                    mode: LaunchMode.externalApplication,
+                                  ),
+                                  child: Text(context.tr('View license')),
+                                ),
+                              const SizedBox(height: 24),
                             ],
                           ),
                         ),
                       ),
-                      child: const Text(
-                        'Lyrics',
+                      child: Text(
+                        context.tr(c.isOnline ? 'Source & credits' : 'Lyrics'),
                         style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
                     ),
@@ -441,7 +494,12 @@ class TrackOptionsPage extends StatelessWidget {
             constraints: BoxConstraints(minHeight: b.maxHeight - 74),
             child: Column(
               children: [
-                Artwork(c.current.art, size: 215, radius: 25),
+                Artwork(
+                  c.current.art,
+                  url: c.current.imageUrl,
+                  size: 215,
+                  radius: 25,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   c.current.title,
@@ -531,7 +589,7 @@ class _OptionAction extends StatelessWidget {
           Icon(icon, color: active ? orange : Colors.white, size: 28),
           const SizedBox(height: 12),
           Text(
-            label,
+            context.tr(label),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13),
           ),
@@ -550,7 +608,7 @@ class _OptionRow extends StatelessWidget {
   Widget build(BuildContext context) => ListTile(
     contentPadding: EdgeInsets.zero,
     leading: Icon(icon, size: 27, color: const Color(0xffdddddd)),
-    title: Text(label, style: const TextStyle(fontSize: 16)),
+    title: Text(context.tr(label), style: const TextStyle(fontSize: 16)),
     onTap: onTap,
   );
 }
@@ -573,19 +631,24 @@ class _QueuePageState extends State<QueuePage> {
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text('Now Playing', style: TextStyle(fontSize: 20)),
+              Expanded(
+                child: Text(
+                  context.tr('Now Playing'),
+                  style: TextStyle(fontSize: 20),
+                ),
               ),
               TapIcon(Icons.close, label: 'Close queue', onTap: c.back),
             ],
           ),
           TrackTile(
-            Track(
-              c.current.id,
-              '${c.current.title} - From ‘Insomnia’',
-              c.current.artist,
-              c.current.art,
-            ),
+            c.isOnline
+                ? c.current
+                : Track(
+                    c.current.id,
+                    '${c.current.title} - From ‘Insomnia’',
+                    c.current.artist,
+                    c.current.art,
+                  ),
             selected: true,
           ),
           const SizedBox(height: 28),
@@ -594,8 +657,12 @@ class _QueuePageState extends State<QueuePage> {
               Expanded(
                 child: Text(
                   selected.isEmpty
-                      ? 'Next From: Latest Trends'
-                      : '${selected.length} selected',
+                      ? context.tr(
+                          c.isOnline ? 'Up next' : 'Next From: Latest Trends',
+                        )
+                      : context.tr('{count} selected', {
+                          'count': selected.length,
+                        }),
                   style: const TextStyle(fontSize: 19),
                 ),
               ),
@@ -605,7 +672,7 @@ class _QueuePageState extends State<QueuePage> {
                     c.removeQueue(selected);
                     setState(selected.clear);
                   },
-                  child: const Text('Remove'),
+                  child: Text(context.tr('Remove')),
                 ),
             ],
           ),
@@ -614,7 +681,10 @@ class _QueuePageState extends State<QueuePage> {
             child: ReorderableListView.builder(
               buildDefaultDragHandles: false,
               itemCount: c.queue.length,
-              onReorder: c.reorderQueue,
+              onReorderItem: (oldIndex, newIndex) => c.reorderQueue(
+                oldIndex,
+                newIndex > oldIndex ? newIndex + 1 : newIndex,
+              ),
               itemBuilder: (context, i) {
                 final t = c.queue[i];
                 return SizedBox(

@@ -1,11 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_strings.dart';
 import 'core/catalog.dart';
 import 'core/controller.dart';
+import 'core/live_controller.dart';
 import 'core/theme.dart';
 import 'features/auth.dart';
 import 'features/discover.dart';
 import 'features/library.dart';
+import 'features/live.dart';
 import 'features/playback.dart';
 import 'features/settings.dart';
 import 'widgets/common.dart';
@@ -46,11 +50,22 @@ class _MusicPodAppState extends State<MusicPodApp> {
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'MusicPod',
-    debugShowCheckedModeBanner: false,
-    theme: musicTheme,
-    home: AppScope(controller: widget.controller, child: const _AppShell()),
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.controller.interfaceLanguageChanges,
+    builder: (context, _) => MaterialApp(
+      title: 'MusicPod',
+      debugShowCheckedModeBanner: false,
+      theme: musicTheme,
+      locale: widget.controller.interfaceLanguage == 'system'
+          ? null
+          : Locale(widget.controller.interfaceLanguage),
+      supportedLocales: AppStrings.supportedLocales,
+      localizationsDelegates: const [
+        AppStrings.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      home: AppScope(controller: widget.controller, child: const _AppShell()),
+    ),
   );
 }
 
@@ -86,7 +101,7 @@ class _AppShell extends StatelessWidget {
                       Expanded(
                         child: KeyedSubtree(
                           key: ValueKey(c.screen),
-                          child: _page(c.screen),
+                          child: _page(c.screen, context),
                         ),
                       ),
                       if (!fullscreen) const AppFooter(),
@@ -112,31 +127,38 @@ class _AppShell extends StatelessWidget {
     );
   }
 
-  Widget _page(AppScreen screen) => switch (screen) {
-    AppScreen.splash => const SplashPage(),
-    AppScreen.signup => const SignupPage(),
-    AppScreen.otp => const SignupPage(otp: true),
-    AppScreen.home => const HomePage(),
-    AppScreen.album || AppScreen.albumFilter => const AlbumPage(),
-    AppScreen.player => const PlayerPage(),
-    AppScreen.trackOptions => const TrackOptionsPage(),
-    AppScreen.queue => const QueuePage(),
-    AppScreen.search => const SearchPage(),
-    AppScreen.searchResults => const SearchResultsPage(),
-    AppScreen.podcasts => const PodcastsPage(),
-    AppScreen.podcastDetail => const PodcastDetailPage(),
-    AppScreen.libraryPlaylists ||
-    AppScreen.libraryArtists ||
-    AppScreen.libraryAlbums ||
-    AppScreen.libraryEpisodes ||
-    AppScreen.libraryDownloads => const LibraryPage(),
-    AppScreen.chooseArtists => const ChooseArtistsPage(),
-    AppScreen.settings => const SettingsPage(),
-    AppScreen.account => const AccountPage(),
-    AppScreen.language => const LanguagePage(),
-    AppScreen.dataSaver ||
-    AppScreen.social ||
-    AppScreen.playback => const PreferencesPage(),
-    AppScreen.equalizer => const EqualizerPage(),
-  };
+  Widget _page(AppScreen screen, BuildContext context) {
+    final c = AppScope.of(context);
+    if (c is LiveController) {
+      final page = livePage(screen, c);
+      if (page != null) return page;
+    }
+    return switch (screen) {
+      AppScreen.splash => const SplashPage(),
+      AppScreen.signup => const SignupPage(),
+      AppScreen.otp => const SignupPage(otp: true),
+      AppScreen.home => const HomePage(),
+      AppScreen.album || AppScreen.albumFilter => const AlbumPage(),
+      AppScreen.player => const PlayerPage(),
+      AppScreen.trackOptions => const TrackOptionsPage(),
+      AppScreen.queue => const QueuePage(),
+      AppScreen.search => const SearchPage(),
+      AppScreen.searchResults => const SearchResultsPage(),
+      AppScreen.podcasts => const PodcastsPage(),
+      AppScreen.podcastDetail => const PodcastDetailPage(),
+      AppScreen.libraryPlaylists ||
+      AppScreen.libraryArtists ||
+      AppScreen.libraryAlbums ||
+      AppScreen.libraryEpisodes ||
+      AppScreen.libraryDownloads => const LibraryPage(),
+      AppScreen.chooseArtists => const ChooseArtistsPage(),
+      AppScreen.settings => const SettingsPage(),
+      AppScreen.account => const AccountPage(),
+      AppScreen.language => const LanguagePage(),
+      AppScreen.dataSaver ||
+      AppScreen.social ||
+      AppScreen.playback => const PreferencesPage(),
+      AppScreen.equalizer => const EqualizerPage(),
+    };
+  }
 }

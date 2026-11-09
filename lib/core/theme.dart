@@ -17,6 +17,14 @@ ThemeData get musicTheme => ThemeData(
   brightness: Brightness.dark,
   scaffoldBackgroundColor: ink,
   fontFamily: 'Roboto',
+  fontFamilyFallback: const [
+    'Noto Sans CJK SC',
+    'Noto Sans CJK JP',
+    'Microsoft YaHei',
+    'Yu Gothic',
+    'PingFang SC',
+    'Hiragino Sans',
+  ],
   colorScheme: const ColorScheme.dark(
     primary: orange,
     surface: ink,

@@ -1,3 +1,4 @@
+import '../l10n/app_strings.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -52,7 +53,9 @@ class SettingsPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          c.username,
+                          c.isOnline && c.email.isEmpty && c.username == 'Guest'
+                              ? context.tr('Guest')
+                              : c.username,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
@@ -60,7 +63,17 @@ class SettingsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          '${33 + c.customPlaylists.length} Playlists  ·  ${125 + c.selectedArtists.length} Following',
+                          c.isOnline
+                              ? context.tr('{count} Playlists', {
+                                  'count': c.customPlaylists.length,
+                                })
+                              : context.tr(
+                                  '{playlists} Playlists  ·  {artists} Following',
+                                  {
+                                    'playlists': 33 + c.customPlaylists.length,
+                                    'artists': 125 + c.selectedArtists.length,
+                                  },
+                                ),
                           style: const TextStyle(fontSize: 12, color: muted),
                         ),
                       ],
@@ -73,7 +86,10 @@ class SettingsPage extends StatelessWidget {
                 (label) => ListTile(
                   contentPadding: EdgeInsets.zero,
                   minTileHeight: 59,
-                  title: Text(label, style: const TextStyle(fontSize: 16)),
+                  title: Text(
+                    context.tr(label),
+                    style: const TextStyle(fontSize: 16),
+                  ),
                   trailing: const Icon(
                     Icons.chevron_right,
                     size: 22,
@@ -84,14 +100,14 @@ class SettingsPage extends StatelessWidget {
                       showModalBottomSheet<void>(
                         context: context,
                         showDragHandle: true,
-                        builder: (_) => const Padding(
+                        builder: (_) => Padding(
                           padding: EdgeInsets.all(28),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Connect to a device',
+                                context.tr('Connect to a device'),
                                 style: TextStyle(fontSize: 24),
                               ),
                               SizedBox(height: 24),
@@ -101,8 +117,8 @@ class SettingsPage extends StatelessWidget {
                                   Icons.phone_android,
                                   color: orange,
                                 ),
-                                title: Text('This device'),
-                                subtitle: Text('Playing locally'),
+                                title: Text(context.tr('This device')),
+                                subtitle: Text(context.tr('Playing locally')),
                                 trailing: Icon(Icons.check, color: orange),
                               ),
                               SizedBox(height: 20),
@@ -143,7 +159,7 @@ Future<void> editAccount(
   final next = await showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(title),
+      title: Text(context.tr(title)),
       content: TextField(
         controller: field,
         autofocus: true,
@@ -151,12 +167,12 @@ Future<void> editAccount(
         keyboardType: title == 'Email'
             ? TextInputType.emailAddress
             : TextInputType.text,
-        decoration: InputDecoration(labelText: title),
+        decoration: InputDecoration(labelText: context.tr(title)),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('Cancel')),
         ),
         TextButton(
           onPressed: () {
@@ -167,7 +183,7 @@ Future<void> editAccount(
               Navigator.pop(context, text);
             }
           },
-          child: const Text('Save'),
+          child: Text(context.tr('Save')),
         ),
       ],
     ),
@@ -229,20 +245,22 @@ class AccountPage extends StatelessWidget {
                       onPressed: () => showDialog<void>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('MusicPod Free'),
-                          content: const Text(
-                            'Enjoy the music and podcast preview. Subscription purchases are not enabled in this demo.',
+                          title: Text(context.tr('MusicPod Free')),
+                          content: Text(
+                            context.tr(
+                              'Enjoy the music and podcast preview. Subscription purchases are not enabled in this demo.',
+                            ),
                           ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Got it'),
+                              child: Text(context.tr('Got it')),
                             ),
                           ],
                         ),
                       ),
-                      child: const Text(
-                        'Change',
+                      child: Text(
+                        context.tr('Change'),
                         style: TextStyle(fontSize: 13),
                       ),
                     ),
@@ -269,9 +287,12 @@ class _AccountField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 16)),
+          Text(context.tr(title), style: const TextStyle(fontSize: 16)),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(color: muted, fontSize: 13)),
+          Text(
+            title == 'Subscription' ? context.tr(value) : value,
+            style: const TextStyle(color: muted, fontSize: 13),
+          ),
         ],
       ),
     ),
@@ -283,42 +304,78 @@ class LanguagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppScope.of(context);
+    const options = {
+      'system': 'Follow device',
+      'en': 'English',
+      'zh': '简体中文',
+      'ja': '日本語',
+    };
     return Column(
       children: [
-        const PageHeading('Languages Options for Music'),
+        const PageHeading('Languages'),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(26, 16, 26, 26),
-            children: languages
-                .map(
-                  (l) => InkWell(
-                    onTap: () => c.toggleSet(c.selectedLanguages, l),
-                    child: SizedBox(
-                      height: 61,
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 28,
-                            child: Checkbox(
-                              value: c.selectedLanguages.contains(l),
-                              activeColor: orange,
-                              checkColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              side: const BorderSide(color: Color(0xff777777)),
-                              onChanged: (_) =>
-                                  c.toggleSet(c.selectedLanguages, l),
-                            ),
+            children: [
+              Text(
+                context.tr('App language'),
+                style: const TextStyle(fontSize: 23),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                context.tr(
+                  'Interface language changes menus and buttons, not song or podcast content.',
+                ),
+                style: const TextStyle(color: muted, height: 1.5),
+              ),
+              const SizedBox(height: 12),
+              RadioGroup<String>(
+                groupValue: c.interfaceLanguage,
+                onChanged: (value) {
+                  if (value != null) c.setInterfaceLanguage(value);
+                },
+                child: Column(
+                  children: options.entries
+                      .map(
+                        (entry) => RadioListTile<String>(
+                          key: ValueKey('interface-language-${entry.key}'),
+                          contentPadding: EdgeInsets.zero,
+                          value: entry.key,
+                          title: Text(
+                            entry.key == 'system'
+                                ? context.tr(entry.value)
+                                : entry.value,
                           ),
-                          const SizedBox(width: 16),
-                          Text(l, style: const TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              const Divider(height: 40),
+              Text(
+                context.tr('Music content preferences'),
+                style: const TextStyle(fontSize: 21),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                context.tr(
+                  'These are content preferences, separate from the app language.',
+                ),
+                style: const TextStyle(color: muted, height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              ...languages.map(
+                (language) => CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(context.tr(language)),
+                  value: c.selectedLanguages.contains(language),
+                  activeColor: orange,
+                  checkColor: Colors.white,
+                  onChanged: (_) => c.toggleSet(c.selectedLanguages, language),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -374,8 +431,10 @@ class PreferencesPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(26, 16, 26, 32),
             children: [
               if (c.screen == AppScreen.playback) ...[
-                const Text(
-                  'Choose how to fade songs in and out, change music sound quality during playback, and more.',
+                Text(
+                  context.tr(
+                    'Choose how to fade songs in and out, change music sound quality during playback, and more.',
+                  ),
                   style: TextStyle(color: muted, fontSize: 13, height: 1.5),
                 ),
                 const SizedBox(height: 38),
@@ -411,11 +470,11 @@ class SettingToggle extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 16)),
+                Text(context.tr(label), style: const TextStyle(fontSize: 16)),
                 if (subtitle.isNotEmpty) ...[
                   const SizedBox(height: 5),
                   Text(
-                    subtitle,
+                    context.tr(subtitle),
                     style: const TextStyle(
                       color: muted,
                       fontSize: 12,
@@ -555,7 +614,10 @@ class EqualizerPage extends StatelessWidget {
                               : null,
                         ),
                         const SizedBox(width: 17),
-                        Text(p, style: const TextStyle(fontSize: 16)),
+                        Text(
+                          context.tr(p),
+                          style: const TextStyle(fontSize: 16),
+                        ),
                       ],
                     ),
                   ),

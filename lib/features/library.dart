@@ -1,3 +1,4 @@
+import '../l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import '../core/catalog.dart';
 import '../core/theme.dart';
@@ -28,14 +29,14 @@ class LibraryPage extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(26, 48, 26, 28),
-          child: Row(
+          child: Wrap(
+            spacing: 25,
             children: [
               _TopTab(
                 'Music',
                 !podcasts,
                 () => c.go(AppScreen.libraryPlaylists),
               ),
-              const SizedBox(width: 25),
               _TopTab(
                 'Podcasts',
                 podcasts,
@@ -46,29 +47,32 @@ class LibraryPage extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 26),
-          child: Row(
-            children: List.generate(
-              options.length,
-              (i) => Padding(
-                padding: const EdgeInsets.only(right: 32),
-                child: InkWell(
-                  onTap: () => c.go(pages[i]),
-                  child: Container(
-                    padding: const EdgeInsets.only(bottom: 10, top: 12),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: c.screen == pages[i]
-                              ? orange
-                              : Colors.transparent,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(
+                options.length,
+                (i) => Padding(
+                  padding: const EdgeInsets.only(right: 32),
+                  child: InkWell(
+                    onTap: () => c.go(pages[i]),
+                    child: Container(
+                      padding: const EdgeInsets.only(bottom: 10, top: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: c.screen == pages[i]
+                                ? orange
+                                : Colors.transparent,
+                          ),
                         ),
                       ),
-                    ),
-                    child: Text(
-                      options[i],
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: c.screen == pages[i] ? Colors.white : muted,
+                      child: Text(
+                        context.tr(options[i]),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: c.screen == pages[i] ? Colors.white : muted,
+                        ),
                       ),
                     ),
                   ),
@@ -138,13 +142,15 @@ class LibraryPage extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Your Episodes',
+                        Text(
+                          context.tr('Your Episodes'),
                           style: TextStyle(fontSize: 16),
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          '${c.downloads.length} episodes',
+                          context.tr('{count} episodes', {
+                            'count': c.downloads.length,
+                          }),
                           style: const TextStyle(fontSize: 13, color: muted),
                         ),
                       ],
@@ -152,7 +158,7 @@ class LibraryPage extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 36),
-                const Text('Unplayed', style: TextStyle(fontSize: 24)),
+                Text(context.tr('Unplayed'), style: TextStyle(fontSize: 24)),
                 const SizedBox(height: 12),
                 const EpisodeCard(
                   'feeney',
@@ -222,7 +228,7 @@ class _TopTab extends StatelessWidget {
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
     child: Text(
-      text,
+      context.tr(text),
       style: TextStyle(
         fontSize: 32,
         color: selected ? Colors.white : const Color(0xff555555),
@@ -253,7 +259,7 @@ class _AddRow extends StatelessWidget {
             child: const Icon(Icons.add, color: muted, size: 26),
           ),
           const SizedBox(width: 16),
-          Text(title, style: const TextStyle(fontSize: 16)),
+          Text(context.tr(title), style: const TextStyle(fontSize: 16)),
         ],
       ),
     ),
@@ -266,7 +272,7 @@ Future<Track?> showCreatePlaylist(BuildContext context) async {
   final name = await showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Create playlist'),
+      title: Text(context.tr('Create playlist')),
       content: TextField(
         controller: field,
         autofocus: true,
@@ -279,7 +285,7 @@ Future<Track?> showCreatePlaylist(BuildContext context) async {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('Cancel')),
         ),
         TextButton(
           onPressed: () {
@@ -287,7 +293,7 @@ Future<Track?> showCreatePlaylist(BuildContext context) async {
               Navigator.pop(context, field.text);
             }
           },
-          child: const Text('Create'),
+          child: Text(context.tr('Create')),
         ),
       ],
     ),
@@ -311,17 +317,17 @@ Future<void> showAddToPlaylist(BuildContext context) async {
       shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(26, 4, 26, 28),
       children: [
-        const Text('Add to playlist', style: TextStyle(fontSize: 24)),
+        Text(context.tr('Add to playlist'), style: TextStyle(fontSize: 24)),
         const SizedBox(height: 20),
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.add),
-          title: const Text('Create playlist'),
+          title: Text(context.tr('Create playlist')),
           onTap: () => Navigator.pop(context, const Track('new', '', '', 69)),
         ),
         ...[
           ...c.customPlaylists,
-          ...playlists,
+          if (!c.isOnline) ...playlists,
         ].map((p) => TrackTile(p, onTap: () => Navigator.pop(context, p))),
       ],
     ),
@@ -332,7 +338,9 @@ Future<void> showAddToPlaylist(BuildContext context) async {
       : playlist;
   if (target != null) {
     c.addToPlaylist(target, track);
-    if (context.mounted) message(context, 'Added to ${target.title}');
+    if (context.mounted) {
+      message(context, context.tr('Added to {name}', {'name': target.title}));
+    }
   }
 }
 
@@ -367,10 +375,10 @@ class _ChooseArtistsPageState extends State<ChooseArtistsPage> {
               color: const Color(0xffbbbbbb),
             ),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 26),
             child: Text(
-              'Choose artists you like',
+              context.tr('Choose artists you like'),
               style: TextStyle(fontSize: 30),
             ),
           ),
@@ -451,7 +459,7 @@ class _ChooseArtistsPageState extends State<ChooseArtistsPage> {
                   minimumSize: const Size(130, 45),
                 ),
                 onPressed: c.back,
-                child: const Text('Done'),
+                child: Text(context.tr('Done')),
               ),
             ),
           ),

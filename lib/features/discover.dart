@@ -1,3 +1,4 @@
+import '../l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import '../core/catalog.dart';
 import '../core/theme.dart';
@@ -43,7 +44,7 @@ class _Shelf extends StatelessWidget {
     children: [
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 26),
-        child: Text(title, style: const TextStyle(fontSize: 25)),
+        child: Text(context.tr(title), style: const TextStyle(fontSize: 25)),
       ),
       const SizedBox(height: 26),
       SizedBox(
@@ -97,9 +98,12 @@ class _Charts extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Padding(
+      Padding(
         padding: EdgeInsets.symmetric(horizontal: 26),
-        child: Text('Featured Charts', style: TextStyle(fontSize: 25)),
+        child: Text(
+          context.tr('Featured Charts'),
+          style: TextStyle(fontSize: 25),
+        ),
       ),
       const SizedBox(height: 26),
       SizedBox(
@@ -135,7 +139,9 @@ class _Charts extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          ['Top Songs', 'Viral 50', 'Evergreen'][index],
+                          context.tr(
+                            ['Top Songs', 'Viral 50', 'Evergreen'][index],
+                          ),
                           style: const TextStyle(
                             color: ink,
                             fontWeight: FontWeight.w700,
@@ -144,7 +150,7 @@ class _Charts extends StatelessWidget {
                         ),
                         const SizedBox(height: 7),
                         Text(
-                          index == 2 ? 'Songs' : 'Global',
+                          context.tr(index == 2 ? 'Songs' : 'Global'),
                           style: const TextStyle(
                             color: Color(0xff555555),
                             fontSize: 16,
@@ -155,11 +161,13 @@ class _Charts extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    [
-                      'Weekly update of the\nmost played tracks…',
-                      'Your daily update of\nmost played tracks',
-                      'Update of the most\nplayed tracks…',
-                    ][index],
+                    context.tr(
+                      [
+                        'Weekly update of the\nmost played tracks…',
+                        'Your daily update of\nmost played tracks',
+                        'Update of the most\nplayed tracks…',
+                      ][index],
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -186,7 +194,7 @@ class SearchPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(26, 42, 26, 28),
       children: [
-        const Text('Search', style: TextStyle(fontSize: 32)),
+        Text(context.tr('Search'), style: TextStyle(fontSize: 32)),
         const SizedBox(height: 24),
         Row(
           children: [
@@ -205,7 +213,7 @@ class SearchPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 32),
-        const Text('Browse all', style: TextStyle(fontSize: 22)),
+        Text(context.tr('Browse all'), style: TextStyle(fontSize: 22)),
         const SizedBox(height: 24),
         GestureDetector(
           onTap: () => c.go(AppScreen.podcasts),
@@ -237,9 +245,12 @@ class SearchPage extends StatelessWidget {
                     color: Colors.white.withValues(alpha: .5),
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(24),
-                  child: Text('Podcasts', style: TextStyle(fontSize: 23)),
+                  child: Text(
+                    context.tr('Podcasts'),
+                    style: TextStyle(fontSize: 23),
+                  ),
                 ),
               ],
             ),
@@ -282,18 +293,18 @@ class SearchPage extends StatelessWidget {
                       fit: BoxFit.cover,
                     ),
                     if (i == 4)
-                      const Positioned(
+                      Positioned(
                         top: 24,
                         left: 20,
                         child: Text(
-                          'Love',
+                          context.tr('Love'),
                           style: TextStyle(color: ink, fontSize: 20),
                         ),
                       ),
                     if (i != 0 && i != 4 && i != 5)
                       Center(
                         child: Text(
-                          titles[i],
+                          context.tr(titles[i]),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 20,
@@ -355,8 +366,8 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                   FocusScope.of(context).unfocus();
                   c.back();
                 },
-                child: const Text(
-                  'Cancel',
+                child: Text(
+                  context.tr('Cancel'),
                   style: TextStyle(color: Colors.white, fontSize: 13),
                 ),
               ),
@@ -366,7 +377,10 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
         Expanded(
           child: tracks.isEmpty
               ? EmptyState(
-                  'No results for “${c.query}”.\nTry another song or artist.',
+                  context.tr(
+                    'No results for “{query}”.\nTry another song or artist.',
+                    {'query': c.query},
+                  ),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 26),
@@ -396,14 +410,17 @@ class PodcastsPage extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.only(top: 42, bottom: 32),
     children: [
-      const Padding(
+      Padding(
         padding: EdgeInsets.symmetric(horizontal: 26),
-        child: Text('Podcasts', style: TextStyle(fontSize: 34)),
+        child: Text(context.tr('Podcasts'), style: TextStyle(fontSize: 34)),
       ),
       const SizedBox(height: 36),
-      const Padding(
+      Padding(
         padding: EdgeInsets.symmetric(horizontal: 26),
-        child: Text('Podcasts for foodies', style: TextStyle(fontSize: 22)),
+        child: Text(
+          context.tr('Podcasts for foodies'),
+          style: TextStyle(fontSize: 22),
+        ),
       ),
       const SizedBox(height: 24),
       SizedBox(
@@ -445,9 +462,9 @@ class PodcastsPage extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 32),
-      const Padding(
+      Padding(
         padding: EdgeInsets.symmetric(horizontal: 26),
-        child: Text('Categories', style: TextStyle(fontSize: 22)),
+        child: Text(context.tr('Categories'), style: TextStyle(fontSize: 22)),
       ),
       const SizedBox(height: 22),
       Padding(
@@ -491,12 +508,14 @@ class PodcastsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      [
-                        'Podcast\nCharts',
-                        'Stories',
-                        'Original &\nExclusives',
-                        'Educational',
-                      ][i],
+                      context.tr(
+                        [
+                          'Podcast\nCharts',
+                          'Stories',
+                          'Original &\nExclusives',
+                          'Educational',
+                        ][i],
+                      ),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: ink,
@@ -576,8 +595,8 @@ class PodcastDetailPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '23,433 Likes  •  6h 23m',
+                    Text(
+                      context.tr('23,433 Likes  •  6h 23m'),
                       style: TextStyle(color: muted, fontSize: 12),
                     ),
                     Row(
@@ -675,7 +694,7 @@ class EpisodeCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            '12 Oct 2019 · $duration',
+            '${MaterialLocalizations.of(context).formatMediumDate(DateTime(2019, 10, 12))} · ${context.tr(duration)}',
             style: const TextStyle(fontSize: 12, color: muted),
           ),
           Row(
@@ -684,14 +703,14 @@ class EpisodeCard extends StatelessWidget {
                 c.downloads.contains(id)
                     ? Icons.check_circle
                     : Icons.add_circle_outline,
-                label: 'Save episode $title',
+                label: context.tr('Save episode {title}', {'title': title}),
                 size: 23,
                 color: c.downloads.contains(id) ? orange : muted,
                 onTap: () => c.toggleSet(c.downloads, id),
               ),
               TapIcon(
                 Icons.more_horiz,
-                label: 'Episode options $title',
+                label: context.tr('Episode options {title}', {'title': title}),
                 onTap: () {
                   c.enqueue(Track(id, title, author, art));
                   message(context, 'Added to queue');
@@ -700,7 +719,7 @@ class EpisodeCard extends StatelessWidget {
               const Spacer(),
               TapIcon(
                 Icons.play_circle_outline,
-                label: 'Play $title',
+                label: context.tr('Play {title}', {'title': title}),
                 onTap: () => c.play(Track(id, title, author, art)),
                 size: 34,
               ),

@@ -38,6 +38,37 @@ class AppController extends ChangeNotifier {
     }
   }
   final bool persist;
+  bool get isOnline => false;
+  bool get persistDevicePreferences => persist;
+  final interfaceLanguageChanges = ValueNotifier<String>('system');
+  String get interfaceLanguage => interfaceLanguageChanges.value;
+  Future<void> restoreInterfaceLanguage() async {
+    if (!persistDevicePreferences) return;
+    final saved = await _preferences.getString('musicpod.interfaceLanguage');
+    if (['system', 'en', 'zh', 'ja'].contains(saved)) {
+      interfaceLanguageChanges.value = saved!;
+    }
+  }
+
+  Future<void> restoreContentLanguages() async {
+    if (!persistDevicePreferences) return;
+    final saved = await _preferences.getStringList('musicpod.contentLanguages');
+    if (saved != null) {
+      selectedLanguages
+        ..clear()
+        ..addAll(saved.where(languages.contains));
+    }
+  }
+
+  Future<void> setInterfaceLanguage(String language) async {
+    if (!['system', 'en', 'zh', 'ja'].contains(language)) return;
+    interfaceLanguageChanges.value = language;
+    notifyListeners();
+    if (persistDevicePreferences) {
+      await _preferences.setString('musicpod.interfaceLanguage', language);
+    }
+  }
+
   late final _preferences = SharedPreferencesAsync();
   AudioPlayer? _audio;
   final List<StreamSubscription<dynamic>> _subscriptions = [];
@@ -156,7 +187,7 @@ class AppController extends ChangeNotifier {
     if (value == screen) return;
     if (remember) _history.add(screen);
     screen = value;
-    if (value.index >= AppScreen.album.index) miniVisible = true;
+    if (!isOnline && value.index >= AppScreen.album.index) miniVisible = true;
     notifyListeners();
   }
 
@@ -204,6 +235,11 @@ class AppController extends ChangeNotifier {
 
   void toggleSet(Set<String> set, String value) {
     if (!set.remove(value)) set.add(value);
+    if (identical(set, selectedLanguages) && persistDevicePreferences) {
+      unawaited(
+        _preferences.setStringList('musicpod.contentLanguages', set.toList()),
+      );
+    }
     notifyListeners();
     unawaited(save());
   }
@@ -269,11 +305,22 @@ class AppController extends ChangeNotifier {
     position = Duration.zero;
     audioError = null;
     playing = true;
+    if (track.durationSeconds > 0) {
+      duration = Duration(seconds: track.durationSeconds);
+    }
     notifyListeners();
     try {
-      await _audio?.play(AssetSource('audio/preview.wav'));
+      if (isOnline && track.audioUrl == null) {
+        throw StateError('No online audio source');
+      }
+      await _audio?.play(
+        track.audioUrl != null
+            ? UrlSource(track.audioUrl!)
+            : AssetSource('audio/preview.wav'),
+      );
     } catch (_) {
-      audioError = 'Unable to play this preview. Please try again.';
+      audioError =
+          'Unable to play this audio. Please check your connection and try again.';
       playing = false;
       notifyListeners();
     }
@@ -290,6 +337,14 @@ class AppController extends ChangeNotifier {
       await _audio?.resume();
       playing = true;
     }
+    notifyListeners();
+  }
+
+  Future<void> stopPlayback() async {
+    playing = false;
+    miniVisible = false;
+    position = Duration.zero;
+    await _audio?.stop();
     notifyListeners();
   }
 
@@ -333,6 +388,7 @@ class AppController extends ChangeNotifier {
 
   @override
   void dispose() {
+    interfaceLanguageChanges.dispose();
     for (final subscription in _subscriptions) {
       unawaited(subscription.cancel());
     }

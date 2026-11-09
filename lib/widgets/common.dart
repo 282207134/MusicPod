@@ -1,3 +1,4 @@
+import '../l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import '../core/catalog.dart';
 import '../core/controller.dart';
@@ -21,20 +22,37 @@ class Artwork extends StatelessWidget {
     this.radius = 8,
     this.circle = false,
     this.fit = BoxFit.cover,
+    this.url,
   });
   final int id;
+  final String? url;
   final double size, radius;
   final bool circle;
   final BoxFit fit;
   @override
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(circle ? size / 2 : radius),
-    child: Image.asset(
-      'assets/images/art-${id.toString().padLeft(2, '0')}.png',
-      width: size,
-      height: size,
-      fit: fit,
-    ),
+    child: url != null
+        ? Image.network(
+            url!,
+            width: size,
+            height: size,
+            fit: fit,
+            errorBuilder: (_, _, _) => SizedBox(
+              width: size,
+              height: size,
+              child: const ColoredBox(
+                color: Color(0xff292929),
+                child: Icon(Icons.music_note, color: muted),
+              ),
+            ),
+          )
+        : Image.asset(
+            'assets/images/art-${id.toString().padLeft(2, '0')}.png',
+            width: size,
+            height: size,
+            fit: fit,
+          ),
   );
 }
 
@@ -54,7 +72,7 @@ class TapIcon extends StatelessWidget {
   final double size;
   @override
   Widget build(BuildContext context) => IconButton(
-    tooltip: label,
+    tooltip: context.tr(label),
     onPressed: onTap,
     icon: Icon(icon, size: size, color: color ?? const Color(0xffdddddd)),
   );
@@ -77,7 +95,7 @@ class PageHeading extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            title,
+            context.tr(title),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 18),
           ),
@@ -113,7 +131,7 @@ class GradientButton extends StatelessWidget {
         onTap: onTap,
         child: Center(
           child: Text(
-            label,
+            context.tr(label),
             style: const TextStyle(fontSize: 16, color: Colors.white),
           ),
         ),
@@ -141,7 +159,7 @@ class PlayButton extends StatelessWidget {
       gradient: warmGradient,
     ),
     child: IconButton(
-      tooltip: playing ? 'Pause' : 'Play',
+      tooltip: context.tr(playing ? 'Pause' : 'Play'),
       onPressed: onTap,
       icon: Icon(
         playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
@@ -178,7 +196,7 @@ class SearchPill extends StatelessWidget {
         readOnly: onTap != null,
         style: TextStyle(fontSize: 14, color: dark ? Colors.white : ink),
         decoration: InputDecoration(
-          hintText: hint,
+          hintText: context.tr(hint),
           hintStyle: TextStyle(
             color: dark ? muted : const Color(0xff888888),
             fontSize: 14,
@@ -210,7 +228,7 @@ class SearchPill extends StatelessWidget {
         ? field
         : Semantics(
             button: true,
-            label: hint,
+            label: context.tr(hint),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: onTap,
@@ -241,7 +259,7 @@ class TrackTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          Artwork(track.art, size: 60, circle: circle),
+          Artwork(track.art, url: track.imageUrl, size: 60, circle: circle),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -259,7 +277,14 @@ class TrackTile extends StatelessWidget {
                 if (track.artist.isNotEmpty) ...[
                   const SizedBox(height: 5),
                   Text(
-                    track.artist,
+                    track.id.startsWith('custom-')
+                        ? context.tr('By {name}', {
+                            'name': track.artist.replaceFirst(
+                              RegExp(r'^By '),
+                              '',
+                            ),
+                          })
+                        : track.artist,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13, color: muted),
@@ -273,7 +298,7 @@ class TrackTile extends StatelessWidget {
           else if (onMore != null)
             TapIcon(
               Icons.more_horiz,
-              label: 'More about ${track.title}',
+              label: context.tr('More about {title}', {'title': track.title}),
               onTap: onMore!,
               size: 22,
             ),
@@ -314,7 +339,12 @@ class AppFooter extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(26, 12, 12, 10),
                 child: Row(
                   children: [
-                    const Artwork(1, size: 56, radius: 6),
+                    Artwork(
+                      c.current.art,
+                      url: c.current.imageUrl,
+                      size: 56,
+                      radius: 6,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -396,7 +426,7 @@ class AppFooter extends StatelessWidget {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              labels[index],
+                              context.tr(labels[index]),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: active ? orange : muted,
@@ -420,7 +450,7 @@ class AppFooter extends StatelessWidget {
 void message(BuildContext context, String text) =>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(text),
+        content: Text(context.tr(text)),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -437,7 +467,7 @@ class EmptyState extends StatelessWidget {
         const Icon(Icons.search_off, size: 40, color: muted),
         const SizedBox(height: 16),
         Text(
-          text,
+          context.tr(text),
           textAlign: TextAlign.center,
           style: const TextStyle(color: muted),
         ),

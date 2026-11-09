@@ -1,3 +1,4 @@
+import '../l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/catalog.dart';
@@ -111,10 +112,10 @@ class _SignupPageState extends State<SignupPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text.rich(
+                Text.rich(
                   TextSpan(
                     children: [
-                      TextSpan(text: 'Signup on '),
+                      TextSpan(text: context.tr('Signup on ')),
                       TextSpan(
                         text: 'MUSIC POD',
                         style: TextStyle(fontWeight: FontWeight.w700),
@@ -126,8 +127,13 @@ class _SignupPageState extends State<SignupPage> {
                 const SizedBox(height: 20),
                 Text(
                   widget.otp
-                      ? 'Thanks. Please enter the 4 digit verification PIN sent to ${c.phone.isEmpty ? '8493856738' : c.phone}'
-                      : 'Enjoy HD Music Streaming & Podcast with Offline playback',
+                      ? context.tr(
+                          'Thanks. Please enter the 4 digit verification PIN sent to {phone}',
+                          {'phone': c.phone.isEmpty ? '8493856738' : c.phone},
+                        )
+                      : context.tr(
+                          'Enjoy HD Music Streaming & Podcast with Offline playback',
+                        ),
                   style: const TextStyle(
                     fontSize: 14,
                     color: muted,
@@ -147,14 +153,16 @@ class _SignupPageState extends State<SignupPage> {
                   obscuringCharacter: '●',
                   onSubmitted: (_) => submit(),
                   decoration: InputDecoration(
-                    hintText: widget.otp
-                        ? 'Enter verification PIN'
-                        : 'Enter phone number',
+                    hintText: context.tr(
+                      widget.otp
+                          ? 'Enter verification PIN'
+                          : 'Enter phone number',
+                    ),
                     hintStyle: const TextStyle(
                       fontSize: 15,
                       color: Colors.white,
                     ),
-                    errorText: error,
+                    errorText: error == null ? null : context.tr(error!),
                   ),
                 ),
                 const SizedBox(height: 55),
@@ -168,23 +176,23 @@ class _SignupPageState extends State<SignupPage> {
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Text(
-                        'Didn’t get Pin?',
+                      Text(
+                        context.tr('Didn’t get Pin?'),
                         style: TextStyle(fontSize: 14, color: muted),
                       ),
                       TextButton(
                         onPressed: () =>
                             message(context, 'Demo verification PIN: 1234'),
-                        child: const Text(
-                          'Send Again',
+                        child: Text(
+                          context.tr('Send Again'),
                           style: TextStyle(fontSize: 14),
                         ),
                       ),
                     ],
                   ),
-                  const Center(
+                  Center(
                     child: Text(
-                      'Demo PIN: 1234',
+                      context.tr('Demo PIN: 1234'),
                       style: TextStyle(fontSize: 12, color: muted),
                     ),
                   ),
@@ -193,13 +201,24 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ),
           Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 25, left: 18),
+              child: IconButton(
+                tooltip: context.tr('App language'),
+                icon: const Icon(Icons.language),
+                onPressed: () => c.go(AppScreen.language),
+              ),
+            ),
+          ),
+          Align(
             alignment: Alignment.topRight,
             child: Padding(
               padding: const EdgeInsets.only(top: 25, right: 18),
               child: TextButton(
                 onPressed: c.finishSignup,
-                child: const Text(
-                  'Skip',
+                child: Text(
+                  context.tr('Skip'),
                   style: TextStyle(color: Colors.white),
                 ),
               ),

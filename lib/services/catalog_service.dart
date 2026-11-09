@@ -149,8 +149,7 @@ class CatalogService {
       throw const ServiceFailure('This URL is not a podcast RSS feed.');
     }
     String child(XmlElement node, String name) =>
-        node.children
-            .whereType<XmlElement>()
+        node.childElements
             .where((e) => e.name.local == name)
             .firstOrNull
             ?.innerText
@@ -175,6 +174,7 @@ class CatalogService {
         .map((item) {
           final enclosure = item.findElements('enclosure').firstOrNull;
           final audio = httpsUrl(enclosure?.getAttribute('url'));
+          final guid = child(item, 'guid');
           final seconds = child(item, 'duration')
               .split(':')
               .fold<int>(
@@ -182,7 +182,7 @@ class CatalogService {
                 (total, part) => total * 60 + (int.tryParse(part) ?? 0),
               );
           return Track(
-            'podcast:${child(item, 'guid').isEmpty ? audio : child(item, 'guid')}',
+            'podcast:${guid.isEmpty ? audio : guid}',
             child(item, 'title'),
             author.isEmpty ? title : author,
             40,

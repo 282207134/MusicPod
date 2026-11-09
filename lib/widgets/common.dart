@@ -447,6 +447,55 @@ class AppFooter extends StatelessWidget {
   }
 }
 
+Future<String?> showTextInput(
+  BuildContext context, {
+  required String title,
+  String? label,
+  String? hint,
+  String initialValue = '',
+  String action = 'Save',
+  int? maxLength,
+  TextInputType keyboardType = TextInputType.text,
+  bool autofocus = true,
+  bool Function(String)? isValid,
+}) {
+  var value = initialValue;
+  return showDialog<String>(
+    context: context,
+    builder: (context) {
+      void submit() {
+        final text = value.trim();
+        if (text.isNotEmpty && (isValid?.call(text) ?? true)) {
+          Navigator.pop(context, text);
+        }
+      }
+
+      return AlertDialog(
+        title: Text(context.tr(title)),
+        content: TextFormField(
+          initialValue: initialValue,
+          autofocus: autofocus,
+          maxLength: maxLength,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            labelText: label == null ? null : context.tr(label),
+            hintText: hint,
+          ),
+          onChanged: (text) => value = text,
+          onFieldSubmitted: (_) => submit(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.tr('Cancel')),
+          ),
+          TextButton(onPressed: submit, child: Text(context.tr(action))),
+        ],
+      );
+    },
+  );
+}
+
 void message(BuildContext context, String text) =>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -1,16 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/catalog_service.dart';
-import '../services/config.dart';
 import '../services/library_cloud.dart';
 import 'catalog.dart';
 import 'controller.dart';
 
 class LiveController extends AppController {
   LiveController({
-    required this.config,
     required this.catalog,
     this.cloud,
     this.localStorage = true,
@@ -21,7 +18,6 @@ class LiveController extends AppController {
     queue.clear();
     duration = Duration.zero;
   }
-  final ServiceConfig config;
   final CatalogService catalog;
   final LibraryCloud? cloud;
   final bool localStorage;
@@ -420,42 +416,12 @@ class LiveController extends AppController {
   }
 
   @override
-  Future<void> next({bool previous = false}) async {
-    final tracks = queue.where((t) => !hiddenTracks.contains(t.id)).toList();
-    if (tracks.isEmpty) return;
-    final index = tracks.indexWhere((t) => t.id == current.id);
-    await play(
-      tracks[shuffle
-          ? Random().nextInt(tracks.length)
-          : (index + (previous ? -1 : 1)) % tracks.length],
-    );
-  }
+  List<Track> get playbackTracks => queue;
 
   @override
-  void openAlbum({Track? playlist}) {
-    selectedPlaylist = playlist;
-    albumQuery = '';
-    go(AppScreen.album);
-  }
-
-  @override
-  List<Track> get visibleAlbum {
-    final source = selectedPlaylist == null
-        ? featured
-        : playlistSongs[selectedPlaylist!.id] ?? <Track>[];
-    final list = source
-        .where(
-          (t) =>
-              !hiddenTracks.contains(t.id) &&
-              '${t.title} ${t.artist}'.toLowerCase().contains(
-                albumQuery.toLowerCase(),
-              ),
-        )
-        .toList();
-    if (sort == 'Title') list.sort((a, b) => a.title.compareTo(b.title));
-    if (sort == 'Artist') list.sort((a, b) => a.artist.compareTo(b.artist));
-    return sort == 'Recently added' ? list.reversed.toList() : list;
-  }
+  List<Track> get albumSource => selectedPlaylist == null
+      ? featured
+      : playlistSongs[selectedPlaylist!.id] ?? <Track>[];
 
   @override
   void addToPlaylist(Track playlist, Track track) {

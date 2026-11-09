@@ -35,11 +35,8 @@ Future<void> main() async {
   }
   final AppController controller = ServiceConfig.demo
       ? AppController()
-      : (LiveController(
-          config: config,
-          catalog: CatalogService(config),
-          cloud: cloud,
-        )..startupError = startupError);
+      : (LiveController(catalog: CatalogService(config), cloud: cloud)
+          ..startupError = startupError);
   await controller.restore();
   await controller.restoreInterfaceLanguage();
   await controller.restoreContentLanguages();

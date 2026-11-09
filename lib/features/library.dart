@@ -268,41 +268,14 @@ class _AddRow extends StatelessWidget {
 
 Future<Track?> showCreatePlaylist(BuildContext context) async {
   final c = AppScope.of(context);
-  final field = TextEditingController();
-  final name = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(context.tr('Create playlist')),
-      content: TextField(
-        controller: field,
-        autofocus: true,
-        maxLength: 50,
-        decoration: const InputDecoration(labelText: 'Playlist name'),
-        onSubmitted: (v) {
-          if (v.trim().isNotEmpty) Navigator.pop(context, v);
-        },
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(context.tr('Cancel')),
-        ),
-        TextButton(
-          onPressed: () {
-            if (field.text.trim().isNotEmpty) {
-              Navigator.pop(context, field.text);
-            }
-          },
-          child: Text(context.tr('Create')),
-        ),
-      ],
-    ),
+  final name = await showTextInput(
+    context,
+    title: 'Create playlist',
+    label: 'Playlist name',
+    action: 'Create',
+    maxLength: 50,
   );
-  final playlist = name == null ? null : c.createPlaylist(name);
-  // Let the closing dialog finish using its controller before disposal.
-  await Future<void>.delayed(const Duration(milliseconds: 250));
-  field.dispose();
-  return playlist;
+  return name == null ? null : c.createPlaylist(name);
 }
 
 String artistName(int index) =>

@@ -273,11 +273,12 @@ class AppController extends ChangeNotifier {
     unawaited(save());
   }
 
+  List<Track> get albumSource => selectedPlaylist == null
+      ? albumTracks
+      : playlistSongs[selectedPlaylist!.id] ?? albumTracks;
+
   List<Track> get visibleAlbum {
-    final source = selectedPlaylist == null
-        ? albumTracks
-        : playlistSongs[selectedPlaylist!.id] ?? albumTracks;
-    final tracks = source
+    final tracks = albumSource
         .where(
           (t) =>
               !hiddenTracks.contains(t.id) &&
@@ -354,13 +355,14 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<Track> get playbackTracks => [albumTracks[1], ...queue];
+
   Future<void> next({bool previous = false}) async {
-    final tracks = [
-      albumTracks[1],
-      ...queue,
-    ].where((t) => !hiddenTracks.contains(t.id)).toList();
+    final tracks = playbackTracks
+        .where((t) => !hiddenTracks.contains(t.id))
+        .toList();
     if (tracks.isEmpty) {
-      if (playing) await togglePlayback();
+      if (playing && !isOnline) await togglePlayback();
       return;
     }
     final index = tracks.indexWhere((t) => t.id == current.id);

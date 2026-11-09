@@ -329,32 +329,15 @@ class LivePodcastsPage extends StatelessWidget {
 }
 
 Future<void> _addFeed(BuildContext context, LiveController c) async {
-  final field = TextEditingController();
-  final url = await showDialog<String>(
-    context: context,
-    builder: (dialog) => AlertDialog(
-      title: Text(context.tr('Add podcast RSS')),
-      content: TextField(
-        controller: field,
-        keyboardType: TextInputType.url,
-        decoration: const InputDecoration(hintText: 'https://…/feed.xml'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialog),
-          child: Text(context.tr('Cancel')),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(dialog, field.text.trim()),
-          child: Text(context.tr('Open')),
-        ),
-      ],
-    ),
+  final url = await showTextInput(
+    context,
+    title: 'Add podcast RSS',
+    hint: 'https://…/feed.xml',
+    action: 'Open',
+    keyboardType: TextInputType.url,
+    autofocus: false,
   );
-  // Wait for the dialog's closing animation before releasing its field.
-  await Future<void>.delayed(const Duration(milliseconds: 250));
-  field.dispose();
-  if (url != null && url.isNotEmpty) await c.openFeed(url);
+  if (url != null) await c.openFeed(url);
 }
 
 class LiveFeedPage extends StatelessWidget {

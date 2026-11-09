@@ -155,46 +155,25 @@ Future<void> editAccount(
   String value,
   void Function(String) save,
 ) async {
-  final c = AppScope.of(context), field = TextEditingController(text: value);
-  final next = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(context.tr(title)),
-      content: TextField(
-        controller: field,
-        autofocus: true,
-        maxLength: title == 'Username' ? 40 : 100,
-        keyboardType: title == 'Email'
-            ? TextInputType.emailAddress
-            : TextInputType.text,
-        decoration: InputDecoration(labelText: context.tr(title)),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(context.tr('Cancel')),
-        ),
-        TextButton(
-          onPressed: () {
-            final text = field.text.trim();
-            if (text.isNotEmpty &&
-                (title != 'Email' ||
-                    RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text))) {
-              Navigator.pop(context, text);
-            }
-          },
-          child: Text(context.tr('Save')),
-        ),
-      ],
-    ),
+  final c = AppScope.of(context);
+  final next = await showTextInput(
+    context,
+    title: title,
+    label: title,
+    initialValue: value,
+    maxLength: title == 'Username' ? 40 : 100,
+    keyboardType: title == 'Email'
+        ? TextInputType.emailAddress
+        : TextInputType.text,
+    isValid: title == 'Email'
+        ? RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch
+        : null,
   );
   if (next != null) {
     save(next);
     c.refresh();
     unawaited(c.save());
   }
-  await Future<void>.delayed(const Duration(milliseconds: 250));
-  field.dispose();
 }
 
 class AccountPage extends StatelessWidget {
